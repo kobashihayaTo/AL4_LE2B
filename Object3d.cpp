@@ -422,7 +422,7 @@ void Object3d::CreateModel()
 	//.objファイルを開く
 	//file.open("Resources/triangle_tex.obj");
 
-	const string modelname = "triangle_mat";
+	const string modelname = "triangle";
 	const string filename = modelname + ".obj";//triangle_mat.obj
 	const string directoryPath = "Resources/" + modelname+"/";//Resources/triangle_mat/
 	file.open(directoryPath + filename); //Resources / triangle_tex.obj

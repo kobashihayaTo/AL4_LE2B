@@ -10,7 +10,8 @@ GameScene::GameScene()
 GameScene::~GameScene()
 {
 	delete spriteBG;
-	delete object3d;
+	delete object3d0;
+	delete object3d1;
 }
 
 void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
@@ -33,8 +34,10 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 	// 背景スプライト生成
 	spriteBG = Sprite::Create(1, { 0.0f,0.0f });
 	// 3Dオブジェクト生成
-	object3d = Object3d::Create();
-	object3d->Update();
+	object3d0= Object3d::Create();
+	object3d0->Update();
+	object3d1= Object3d::Create();
+	object3d1->Update();
 }
 
 void GameScene::Update()
@@ -43,7 +46,8 @@ void GameScene::Update()
 	if (input->PushKey(DIK_UP) || input->PushKey(DIK_DOWN) || input->PushKey(DIK_RIGHT) || input->PushKey(DIK_LEFT))
 	{
 		// 現在の座標を取得
-		XMFLOAT3 position = object3d->GetPosition();
+		XMFLOAT3 position = object3d0->GetPosition();
+
 
 		// 移動後の座標を計算
 		if (input->PushKey(DIK_UP)) { position.y += 1.0f; }
@@ -52,7 +56,7 @@ void GameScene::Update()
 		else if (input->PushKey(DIK_LEFT)) { position.x -= 1.0f; }
 
 		// 座標の変更を反映
-		object3d->SetPosition(position);
+		object3d0->SetPosition(position);
 	}
 
 	// カメラ移動
@@ -64,7 +68,8 @@ void GameScene::Update()
 		else if (input->PushKey(DIK_A)) { Object3d::CameraMoveVector({ -1.0f,0.0f,0.0f }); }
 	}
 
-	object3d->Update();
+	object3d0->Update();
+	object3d1->Update();
 }
 
 void GameScene::Draw()
@@ -93,8 +98,8 @@ void GameScene::Draw()
 	Object3d::PreDraw(cmdList);
 
 	// 3Dオブクジェクトの描画
-	object3d->Draw();
-
+	object3d0->Draw();
+	object3d1->Draw();
 	/// <summary>
 	/// ここに3Dオブジェクトの描画処理を追加できる
 	/// </summary>
