@@ -150,15 +150,15 @@ void GameScene::Update()
 	std::ostringstream raystr;
 	raystr<<"lay.start("
 		<< std::fixed << std::setprecision(2)//小数点以下2桁まで
-		<< inter.m128_f32[0] << ","//x
-		<< inter.m128_f32[1] << ","//y
-		<< inter.m128_f32[2] << ",)";//z
+		<< ray.start.m128_f32[0] << ","//x
+		<< ray.start.m128_f32[1] << ","//y
+		<< ray.start.m128_f32[2] << ",)";//z
 
 	debugText.Print(spherestr.str(), 50, 180, 1.0f);
 
 	//レイと平面の当たり判定
 	XMVECTOR inter;
-	float distance
+	float distance;
 	bool hit = Collision::CheckRay2Plane(ray, plane,
 		&distance, &inter);
 	if (hit) {
