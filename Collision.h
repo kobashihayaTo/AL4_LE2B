@@ -37,5 +37,11 @@ public:
 	/// </summary>
 	static bool CheckRay2Triangle(const Ray& ray, const Triangle&
 		triangle, float* distance = nullptr, DirectX::XMVECTOR* inter = nullptr);
+
+	/// <summary>
+	/// ƒŒƒC‚Æ‹…‚Ì“–‚½‚è”»’è
+	/// </summary>
+	static bool CheakRay2Shere(const Ray& ray, const Sphere& sphere,
+		float* distance = nullptr, DirectX::XMVECTOR* inter = nullptr);
 };
 

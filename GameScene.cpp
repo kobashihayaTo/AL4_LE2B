@@ -197,6 +197,27 @@ void GameScene::Update()
 
 	}
 
+	//レイと球の当たり判定
+	float distance;
+	XMVECTOR inter;
+	bool hit = Collision::CheakRay2Shere(ray, sphere, &distance, &inter);
+	if (hit) {
+		debugText.Print("HIT", 50, 260, 1.0f);
+		//stringstreamをリセットし、交点座標を埋め込む
+		raystr.str("");
+		raystr.clear();
+		raystr << "inter:(" << std::fixed << std::setprecision(2)
+			<< inter.m128_f32[0] << "," << inter.m128_f32[1] << "," << inter.m128_f32[2] << ")";
+
+		debugText.Print(raystr.str(), 50, 280, 1.0f);
+
+		raystr.str("");
+		raystr.clear();
+		raystr << "distance:(" << std::fixed << std::setprecision(2) << distance << ")";
+
+		debugText.Print(raystr.str(), 50, 300, 1.0f);
+
+	}
 
 	// カメラ移動
 	if (input->PushKey(DIK_W) || input->PushKey(DIK_S) || input->PushKey(DIK_D) || input->PushKey(DIK_A))

@@ -137,35 +137,65 @@ bool Collision::CheckRay2Plane(const Ray& ray, const Plane& plane, float* distan
 
 bool Collision::CheckRay2Triangle(const Ray& ray, const Triangle& triangle, float* distance, DirectX::XMVECTOR* inter)
 {
-	//三角形が乗っている平面を算出
-	Plane plane;
-	XMVECTOR interPlane;
-	plane.normal = triangle.normal;
-	plane.distance = XMVector3Dot(triangle.normal, triangle.p0).m128_f32[0];
-	//レイと平面が当たっていなければ、当たっていない
-	if (!CheckRay2Plane(ray, plane, distance, &interPlane)) { return false; }
-	//レイと平面が当たっていたので、距離と交点が書き込まれた
-	//レイと平面の交点が三角形の内側にあるか判定
-	const float epslion = 1.0e-5f;//誤差吸収用の微小な値
-	XMVECTOR m;
-	//辺p0_p1について
-	XMVECTOR pt_p0=triangle.p0-interPlane;
-	XMVECTOR p0_p1=triangle.p1-triangle.p0;
-	m = XMVector3Cross(pt_p0, p0_p1);
-	//辺の外側ですれば当たっていないので判定を打ち切る
-	if (XMVector3Dot(m, triangle.normal).m128_f32[0] < -epslion) { return false; }
+    Plane plane;
+    XMVECTOR interPlane;
+    plane.normal = triangle.normal;
+    plane.distance = XMVector3Dot(triangle.normal, triangle.p0).m128_f32[0];
+    // レイと平面が当たっていなければ、当たってない
+    if (!CheckRay2Plane(ray, plane, distance, &interPlane)) { return false; }
+    // レイと平面が当たっていたので、距離と交点が書き込まれた
+    // レイと平面の交点が三角形の内側にあるか判定
+    const float epsilon = 1.0e-5f; // 誤差吸収用の微小な値
+    XMVECTOR m;
+    // 辺pt_p0について
+    XMVECTOR pt_p0 = triangle.p0 - interPlane;
+    // 辺p0_p1について
+    XMVECTOR p0_p1 = triangle.p1 - triangle.p0;
+    // 辺p1_p2について
+    XMVECTOR p1_p2 = triangle.p2 - triangle.p1;
+    // 辺p2_p0について
+    XMVECTOR p2_p0 = triangle.p0 - triangle.p2;
 
-	//辺p1_p2について
+    m = XMVector3Cross(pt_p0, p0_p1);
+    // 辺の外側であれば当たってないので判定を打ち切る
+    if (XMVector3Dot(m, triangle.normal).m128_f32[0] < -epsilon) { return false; }
 
-	//辺の外側であれば当たっていないので判定を打ち切る
+    m = XMVector3Cross(p1_p2, p2_p0);
+    // 辺の外側であれば当たってないので判定を打ち切る
+    if (XMVector3Dot(m, triangle.normal).m128_f32[0] < -epsilon) { return false; }
 
-	//辺p2_p0について
+    m = XMVector3Cross(p2_p0, pt_p0);
+    // 辺の外側であれば当たってないので判定を打ち切る
+    if (XMVector3Dot(m, triangle.normal).m128_f32[0] < -epsilon) { return false; }
 
-	//辺の外側であれば当たっていないので判定を打ち切る
+    // 内側なので、当たってる
+    if (inter) {
+        *inter = interPlane;
+    }
 
-	//内側なので、当たっている
-	if (inter) {
-		*inter = interPlane;
-	}
-	return true;
+    return true;
+}
+
+bool Collision::CheakRay2Shere(const Ray& ray, const Sphere& sphere, float* distance, DirectX::XMVECTOR* inter)
+{
+    XMVECTOR m = ray.start - sphere.center;
+    float b = XMVector3Dot(m, ray.dir).m128_f32[0];
+    float c = XMVector3Dot(m, m).m128_f32[0] - sphere.radius * sphere.radius;
+    //layの始点がsphereの外側にあり(c>0)、layがsphereから離れていく方向をさしている場合(b>0)、当たらない
+    if (c > 0.0f && b > 0.0f)return false;
+
+    float discr = b * b - c;
+    //負の判定式はレイが球を外れていることに一致
+    if (discr < 0.0f) { return false; }
+
+    //レイは交差している
+    //交差する最小の値tを計算
+    float t = -b - sqrtf(discr);
+    //tが負である場合、レイは球の内側から開始しているのでtをゼロにクランプ
+    if (t < 0)t = 0.0f;
+    if (distance) { *distance = t; }
+
+    if (inter) { *inter = ray.start + t * ray.dir; }
+
+    return true;
 }
