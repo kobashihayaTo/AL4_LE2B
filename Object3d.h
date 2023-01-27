@@ -31,16 +31,6 @@ public: // サブクラス
 		XMMATRIX mat;	// ３Ｄ変換行列
 	};
 
-	// 定数バッファ用データ構造体B1
-	struct  ConstBufferDataB1
-	{
-		XMFLOAT3 ambient;//アンビエント係数
-		float pad1;//パディング
-		XMFLOAT3 diffuse;//ディフューズ係数
-		float pad2;//パディング
-		XMFLOAT3 specular;//スペキュラー係数
-		float alpha;//アルファ
-	};
 
 private: // 定数
 	static const int division = 50;					// 分割数
@@ -141,10 +131,7 @@ private: // 静的メンバ変数
 	*/
 
 private:// 静的メンバ関数
-	/// <summary>
-	/// デスクリプタヒープの初期化
-	/// </summary>
-	static void InitializeDescriptorHeap();
+
 
 	/// <summary>
 	/// カメラ初期化
@@ -158,11 +145,6 @@ private:// 静的メンバ関数
 	/// </summary>
 	/// <returns>成否</returns>
 	static void InitializeGraphicsPipeline();
-
-	///// <summary>
-	///// モデル作成
-	///// </summary>
-	//static void CreateModel();
 
 	/// <summary>
 	/// ビュー行列を更新
@@ -195,10 +177,12 @@ public: // メンバ関数
 	/// <param name="position">座標</param>
 	void SetPosition(const XMFLOAT3& position) { this->position = position; }
 
+	//setter
+	void SetModel(Model* model) { this->model = model; }
+
 private: // メンバ変数
 
 	ComPtr<ID3D12Resource> constBuffB0; // 定数バッファ
-	ComPtr<ID3D12Resource> constBuffB1; // 定数バッファ
 
 	// 色
 	XMFLOAT4 color = { 1,1,1,1 };
@@ -209,9 +193,11 @@ private: // メンバ変数
 	// ローカル座標
 	XMFLOAT3 position = { 0,0,0 };
 	// ローカルワールド変換行列
-	XMMATRIX matWorld;
+	XMMATRIX matWorld = {};
 	// 親オブジェクト
 	Object3d* parent = nullptr;
 
+	//モデル
+	Model* model = nullptr;
 };
 

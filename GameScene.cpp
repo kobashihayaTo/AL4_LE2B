@@ -13,8 +13,14 @@ GameScene::GameScene()
 GameScene::~GameScene()
 {
 	delete spriteBG;
+	//3Dオブジェクト解放
 	delete object3d_1;
 	delete object3d_2;
+	delete object3d_3;
+	//3Dモデル解放
+	delete model;
+	delete model_1;
+
 }
 
 void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
@@ -36,11 +42,23 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 
 	// 背景スプライト生成
 	spriteBG = Sprite::Create(1, { 0.0f,0.0f });
+
+	//OBJからモデルデータを読み込む
+	model = Model::LoadFromOBJ("ground");
+	model_1 = Model::LoadFromOBJ("triangle_mat");
 	// 3Dオブジェクト生成
 	object3d_1 = Object3d::Create();
 	object3d_2 = Object3d::Create();
-	object3d_1->Update();
-	object3d_2->Update();
+	object3d_3 = Object3d::Create();
+	//3Dオブジェクトと3Dモデルを紐づけ
+	object3d_1->SetModel(model);
+	object3d_2->SetModel(model_1);
+	object3d_3->SetModel(model_1);
+	//3Dオブジェクトの位置を指定
+	object3d_1->SetPosition({ 0,-12,0 });
+	object3d_2->SetPosition({ -5,0,-5 });
+	object3d_3->SetPosition({ +5,0,+5 });
+
 	
 	//球の初期値を設定
 	sphere.center = XMVectorSet(0, 2, 0, 1);//中心座標
@@ -60,6 +78,12 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 
 void GameScene::Update()
 {
+
+	//3Dオブジェクト更新
+	object3d_1->Update();
+	object3d_2->Update();
+	object3d_3->Update();
+
 	// オブジェクト移動
 	if (input->PushKey(DIK_UP) || input->PushKey(DIK_DOWN) || input->PushKey(DIK_RIGHT) || input->PushKey(DIK_LEFT))
 	{
@@ -228,7 +252,9 @@ void GameScene::Update()
 		else if (input->PushKey(DIK_A)) { Object3d::CameraMoveVector({ -1.0f,0.0f,0.0f }); }
 	}
 
-	object3d_1->Update();
+	//object3d_1->Update();
+	//object3d_2->Update();
+	//object3d_3->Update();
 }
 
 void GameScene::Draw()
@@ -240,7 +266,7 @@ void GameScene::Draw()
 	// 背景スプライト描画前処理
 	Sprite::PreDraw(cmdList);
 	// 背景スプライト描画
-	spriteBG->Draw();
+	/*spriteBG->Draw();*/
 
 	/// <summary>
 	/// ここに背景スプライトの描画処理を追加できる
@@ -259,7 +285,7 @@ void GameScene::Draw()
 	// 3Dオブクジェクトの描画
 	object3d_1->Draw();
 	object3d_2->Draw();
-
+	object3d_3->Draw();
 	/// <summary>
 	/// ここに3Dオブジェクトの描画処理を追加できる
 	/// </summary>
@@ -275,7 +301,6 @@ void GameScene::Draw()
 	/// <summary>
 	/// ここに前景スプライトの描画処理を追加できる
 	/// </summary>
-
 	// デバッグテキストの描画
 	debugText.DrawAll(cmdList);
 

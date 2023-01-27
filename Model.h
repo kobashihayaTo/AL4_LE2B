@@ -42,25 +42,57 @@ public://サブクラス
 			alpha = 1.0f;
 		}
 	};
+
+	// 定数バッファ用データ構造体B1
+	struct  ConstBufferDataB1
+	{
+		XMFLOAT3 ambient;//アンビエント係数
+		float pad1;//パディング
+		XMFLOAT3 diffuse;//ディフューズ係数
+		float pad2;//パディング
+		XMFLOAT3 specular;//スペキュラー係数
+		float alpha;//アルファ
+	};
+
 public:
 	//OBJファイルから3Dモデルを読み込む
-	static Model* LoadFromOBJ();
+	static Model* LoadFromOBJ(const std::string& modelname);
+
 	/// <summary>
 	/// テクスチャ読み込み
 	/// </summary>
 	bool LoadTexture(const std::string& directoryPath, const std::string& filename);
+
 	/// <summary>
 	/// マテリアル読み込み
 	/// </summary>
 	void LoadMaterial(const std::string& directoryPath, const std::string& filename);
+
 	//setter
 	static void SetDevice(ID3D12Device* device) { Model::device = device; }
 
+	/// <summary>
+	/// デスクリプタヒープの初期化
+	/// </summary>
+	void InitializeDescriptorHeap();
+
+	//各種バッファ生成
+	void CreateBuffers();
+
+public:
+	/// <summary>
+	/// 描画
+	/// </summary>
+	void Draw(ID3D12GraphicsCommandList* cmdList, UINT rootParamIndexMaterial);
+
 private://非公開のメンバ関数
+
 	//OBJファイルから3Dモデルを読み込む
-	void LoadFromInternal();
+	void LoadFromInternal(const std::string& modelname);
 
 private:
+	ComPtr<ID3D12Resource> constBuffB1; // 定数バッファ
+
 	// デスクリプタサイズ
 	UINT descriptorHandleIncrementSize;
 	// 頂点バッファ
@@ -88,5 +120,6 @@ private:
 
 	// デバイス
 	static ID3D12Device* device;
+
 };
 

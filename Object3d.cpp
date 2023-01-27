@@ -54,8 +54,8 @@ void Object3d::StaticInitialize(ID3D12Device * device, int window_width, int win
 
 	Object3d::device = device;
 		
-	// デスクリプタヒープの初期化
-	InitializeDescriptorHeap();
+	//// デスクリプタヒープの初期化
+	//InitializeDescriptorHeap();
 
 	// カメラ初期化
 	InitializeCamera(window_width, window_height);
@@ -146,25 +146,6 @@ void Object3d::CameraMoveVector(XMFLOAT3 move)
 
 	SetEye(eye_moved);
 	SetTarget(target_moved);
-}
-
-void Object3d::InitializeDescriptorHeap()
-{
-	HRESULT result = S_FALSE;
-	
-	// デスクリプタヒープを生成	
-	D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc = {};
-	descHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	descHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;//シェーダから見えるように
-	descHeapDesc.NumDescriptors = 1; // シェーダーリソースビュー1つ
-	result = device->CreateDescriptorHeap(&descHeapDesc, IID_PPV_ARGS(&descHeap));//生成
-	if (FAILED(result)) {
-		assert(0);
-	}
-
-	// デスクリプタサイズを取得
-	descriptorHandleIncrementSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
 }
 
 void Object3d::InitializeCamera(int window_width, int window_height)
@@ -306,7 +287,7 @@ void Object3d::InitializeGraphicsPipeline()
 	descRangeSRV.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0 レジスタ
 
 	// ルートパラメータ
-	CD3DX12_ROOT_PARAMETER rootparams[3];
+	CD3DX12_ROOT_PARAMETER rootparams[3] = {};
 	rootparams[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
 	rootparams[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL);
 	rootparams[2].InitAsDescriptorTable(1, &descRangeSRV, D3D12_SHADER_VISIBILITY_ALL);
@@ -333,67 +314,7 @@ void Object3d::InitializeGraphicsPipeline()
 
 }
 
-//void Object3d::CreateModel()
-//{
-//	HRESULT result = S_FALSE;
-//
-//	//ファイルストリーム
-//	std::ifstream file;
-//
-//	std::vector<VertexPosNormalUv> realVertices;
-//	
-//	UINT sizeVB = static_cast<UINT>(sizeof(VertexPosNormalUv) * vertices.size());
-//	UINT sizeIB = static_cast<UINT>(sizeof(unsigned short) * indices.size());
-//	// ヒーププロパティ
-//	CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-//	// リソース設定
-//	CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeVB);
-//
-//	
-//
-//	// 頂点バッファ生成
-//	result = device->CreateCommittedResource(
-//		&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-//		IID_PPV_ARGS(&vertBuff));
-//	assert(SUCCEEDED(result));
-//
-//	// 頂点バッファへのデータ転送
-//	VertexPosNormalUv* vertMap = nullptr;
-//	result = vertBuff->Map(0, nullptr, (void**)&vertMap);
-//	if (SUCCEEDED(result)) {
-//		//memcpy(vertMap, vertices, sizeof(vertices));
-//		std::copy(vertices.begin(), vertices.end(), vertMap);
-//		vertBuff->Unmap(0, nullptr);
-//	}
-//
-//	// 頂点バッファビューの作成
-//	vbView.BufferLocation = vertBuff->GetGPUVirtualAddress();
-//	vbView.SizeInBytes = sizeVB;
-//	vbView.StrideInBytes = sizeof(vertices[0]);
-//
-//	/*UINT sizeIB = static_cast<UINT>(sizeof(indices));*/
-//	// リソース設定
-//	resourceDesc.Width = sizeIB;
-//
-//	// インデックスバッファ生成
-//	result = device->CreateCommittedResource(
-//		&heapProps, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-//		IID_PPV_ARGS(&indexBuff));
-//
-//	// インデックスバッファへのデータ転送
-//	unsigned short* indexMap = nullptr;
-//	result = indexBuff->Map(0, nullptr, (void**)&indexMap);
-//	if (SUCCEEDED(result)) {
-//
-//		std::copy(indices.begin(), indices.end(), indexMap);
-//		indexBuff->Unmap(0, nullptr);
-//	}
-//
-//	// インデックスバッファビューの作成
-//	ibView.BufferLocation = indexBuff->GetGPUVirtualAddress();
-//	ibView.Format = DXGI_FORMAT_R16_UINT;
-//	ibView.SizeInBytes = sizeIB;
-//}
+
 
 void Object3d::UpdateViewMatrix()
 {
@@ -422,18 +343,6 @@ bool Object3d::Initialize()
 		IID_PPV_ARGS(&constBuffB0));
 	assert(SUCCEEDED(result));
 
-
-	CD3DX12_RESOURCE_DESC resourceDescB1 =
-		CD3DX12_RESOURCE_DESC::Buffer((sizeof(ConstBufferDataB1) + 0xff) & ~0xff);
-
-	// 定数バッファの生成
-	result = device->CreateCommittedResource(
-		&heapProps, // アップロード可能
-		D3D12_HEAP_FLAG_NONE,
-		&resourceDescB1,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&constBuffB1));
 
 	return true;
 }
@@ -469,14 +378,7 @@ void Object3d::Update()
 	constMap0->mat = matWorld * matView * matProjection;	// 行列の合成
 	constBuffB0->Unmap(0, nullptr);
 
-	////定数バッファへデータ転送
-	//ConstBufferDataB1* constMap1 = nullptr;
-	//result = constBuffB1->Map(0, nullptr, (void**)&constMap1);
-	//constMap1->ambient = material.ambient;
-	//constMap1->diffuse = material.diffuse;
-	//constMap1->specular = material.specular;
-	//constMap1->alpha = material.alpha;
-	//constBuffB1->Unmap(0, nullptr);
+
 }
 
 void Object3d::Draw()
@@ -484,15 +386,13 @@ void Object3d::Draw()
 	// nullptrチェック
 	assert(device);
 	assert(Object3d::cmdList);
-		
-	
 
-	// デスクリプタヒープの配列
-	ID3D12DescriptorHeap* ppHeaps[] = { descHeap.Get() };
-	cmdList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+	//モデルがセットされていなければ描画をスキップ
+	if (model == nullptr)return;
 
 	// 定数バッファビューをセット
 	cmdList->SetGraphicsRootConstantBufferView(0, constBuffB0->GetGPUVirtualAddress());
-	cmdList->SetGraphicsRootConstantBufferView(1, constBuffB1->GetGPUVirtualAddress());
 
+	//モデルを描画
+	model->Draw(cmdList, 1);
 }
