@@ -1,51 +1,28 @@
 ﻿#include "Object3d.h"
 #include <d3dcompiler.h>
 #include <DirectXTex.h>
-
-#include <fstream>//ファイル出力
-#include <sstream>//文字列に対する入出力
-#include <string>//文字列
-#include <vector>//頂点データをまとめるのに使う
-using namespace std;
+#include <fstream>
+#include <sstream>
+#include <vector>
 
 #pragma comment(lib, "d3dcompiler.lib")
 
 using namespace DirectX;
 using namespace Microsoft::WRL;
+using namespace std;
 
 /// <summary>
 /// 静的メンバ変数の実体
 /// </summary>
-const float Object3d::radius = 5.0f;				// 底面の半径
-const float Object3d::prizmHeight = 8.0f;			// 柱の高さ
 ID3D12Device* Object3d::device = nullptr;
-UINT Object3d::descriptorHandleIncrementSize = 0;
 ID3D12GraphicsCommandList* Object3d::cmdList = nullptr;
 ComPtr<ID3D12RootSignature> Object3d::rootsignature;
 ComPtr<ID3D12PipelineState> Object3d::pipelinestate;
-ComPtr<ID3D12DescriptorHeap> Object3d::descHeap;
-
-//ComPtr<ID3D12Resource> Object3d::vertBuff;
-//ComPtr<ID3D12Resource> Object3d::indexBuff;
-
-ComPtr<ID3D12Resource> Object3d::texbuff;
-CD3DX12_CPU_DESCRIPTOR_HANDLE Object3d::cpuDescHandleSRV;
-CD3DX12_GPU_DESCRIPTOR_HANDLE Object3d::gpuDescHandleSRV;
 XMMATRIX Object3d::matView{};
 XMMATRIX Object3d::matProjection{};
 XMFLOAT3 Object3d::eye = { 0, 0, -50.0f };
 XMFLOAT3 Object3d::target = { 0, 0, 0 };
 XMFLOAT3 Object3d::up = { 0, 1, 0 };
-
-//D3D12_VERTEX_BUFFER_VIEW Object3d::vbView{};
-//D3D12_INDEX_BUFFER_VIEW Object3d::ibView{};
-//Object3d::VertexPosNormalUv Object3d::vertices[vertexCount];
-//unsigned short Object3d::indices[planeCount * 3];
-
-//std::vector<Object3d::VertexPosNormalUv> Object3d::vertices;
-//std::vector<unsigned short>Object3d::indices;
-//
-//Object3d::Material Object3d::material;
 
 void Object3d::StaticInitialize(ID3D12Device * device, int window_width, int window_height)
 {
@@ -54,22 +31,13 @@ void Object3d::StaticInitialize(ID3D12Device * device, int window_width, int win
 
 	Object3d::device = device;
 		
-	//// デスクリプタヒープの初期化
-	//InitializeDescriptorHeap();
-
 	// カメラ初期化
 	InitializeCamera(window_width, window_height);
 
 	// パイプライン初期化
 	InitializeGraphicsPipeline();
 
-	// テクスチャ読み込み
-	/*LoadTexture();*/
-
-	//// モデル生成
-	//CreateModel();
-
-	//モデルにデバイスをセット
+	// モデルにデバイスをセット
 	Model::SetDevice(device);
 }
 
@@ -97,6 +65,7 @@ void Object3d::PostDraw()
 
 Object3d * Object3d::Create()
 {
+
 	// 3Dオブジェクトのインスタンスを生成
 	Object3d* object3d = new Object3d();
 	if (object3d == nullptr) {
@@ -110,7 +79,7 @@ Object3d * Object3d::Create()
 		return nullptr;
 	}
 
-	//スケールをセット
+	// スケールをセット
 	float scale_val = 20;
 	object3d->scale = { scale_val,scale_val,scale_val };
 
@@ -178,7 +147,7 @@ void Object3d::InitializeGraphicsPipeline()
 
 	// 頂点シェーダの読み込みとコンパイル
 	result = D3DCompileFromFile(
-		L"OBJVertexShader.hlsl",	// シェーダファイル名
+		L"Resources/Shaders/OBJVertexShader.hlsl",	// シェーダファイル名
 		nullptr,
 		D3D_COMPILE_STANDARD_FILE_INCLUDE, // インクルード可能にする
 		"main", "vs_5_0",	// エントリーポイント名、シェーダーモデル指定
@@ -201,7 +170,7 @@ void Object3d::InitializeGraphicsPipeline()
 
 	// ピクセルシェーダの読み込みとコンパイル
 	result = D3DCompileFromFile(
-		L"OBJPixelShader.hlsl",	// シェーダファイル名
+		L"Resources/Shaders/OBJPixelShader.hlsl",	// シェーダファイル名
 		nullptr,
 		D3D_COMPILE_STANDARD_FILE_INCLUDE, // インクルード可能にする
 		"main", "ps_5_0",	// エントリーポイント名、シェーダーモデル指定
@@ -250,6 +219,8 @@ void Object3d::InitializeGraphicsPipeline()
 	gpipeline.SampleMask = D3D12_DEFAULT_SAMPLE_MASK; // 標準設定
 	// ラスタライザステート
 	gpipeline.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	//gpipeline.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+	//gpipeline.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
 	// デプスステンシルステート
 	gpipeline.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 
@@ -287,7 +258,7 @@ void Object3d::InitializeGraphicsPipeline()
 	descRangeSRV.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0 レジスタ
 
 	// ルートパラメータ
-	CD3DX12_ROOT_PARAMETER rootparams[3] = {};
+	CD3DX12_ROOT_PARAMETER rootparams[3];
 	rootparams[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
 	rootparams[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL);
 	rootparams[2].InitAsDescriptorTable(1, &descRangeSRV, D3D12_SHADER_VISIBILITY_ALL);
@@ -314,8 +285,6 @@ void Object3d::InitializeGraphicsPipeline()
 
 }
 
-
-
 void Object3d::UpdateViewMatrix()
 {
 	// ビュー行列の更新
@@ -327,23 +296,24 @@ bool Object3d::Initialize()
 	// nullptrチェック
 	assert(device);
 
+	HRESULT result;
+
 	// ヒーププロパティ
 	CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-
 	// リソース設定
-	CD3DX12_RESOURCE_DESC resourceDescB0 =
+	CD3DX12_RESOURCE_DESC resourceDesc =
 		CD3DX12_RESOURCE_DESC::Buffer((sizeof(ConstBufferDataB0) + 0xff) & ~0xff);
-
-	HRESULT result;
 
 	// 定数バッファの生成
 	result = device->CreateCommittedResource(
 		&heapProps, // アップロード可能
-		D3D12_HEAP_FLAG_NONE, &resourceDescB0, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		D3D12_HEAP_FLAG_NONE, 
+		&resourceDesc, 
+		D3D12_RESOURCE_STATE_GENERIC_READ, 
+		nullptr,
 		IID_PPV_ARGS(&constBuffB0));
 	assert(SUCCEEDED(result));
-
-
+	
 	return true;
 }
 
@@ -373,12 +343,10 @@ void Object3d::Update()
 	}
 
 	// 定数バッファへデータ転送
-	ConstBufferDataB0* constMap0 = nullptr;
-	result = constBuffB0->Map(0, nullptr, (void**)&constMap0);
-	constMap0->mat = matWorld * matView * matProjection;	// 行列の合成
+	ConstBufferDataB0* constMap = nullptr;
+	result = constBuffB0->Map(0, nullptr, (void**)&constMap);
+	constMap->mat = matWorld * matView * matProjection;	// 行列の合成
 	constBuffB0->Unmap(0, nullptr);
-
-
 }
 
 void Object3d::Draw()
@@ -386,13 +354,13 @@ void Object3d::Draw()
 	// nullptrチェック
 	assert(device);
 	assert(Object3d::cmdList);
-
-	//モデルがセットされていなければ描画をスキップ
-	if (model == nullptr)return;
+		
+	// モデルがセットされていなければ描画をスキップ
+	if (model == nullptr) return;
 
 	// 定数バッファビューをセット
 	cmdList->SetGraphicsRootConstantBufferView(0, constBuffB0->GetGPUVirtualAddress());
 
-	//モデルを描画
+	// モデルを描画
 	model->Draw(cmdList, 1);
 }

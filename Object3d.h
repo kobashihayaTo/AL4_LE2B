@@ -5,6 +5,7 @@
 #include <d3d12.h>
 #include <DirectXMath.h>
 #include <d3dx12.h>
+#include <string>
 
 #include "Model.h"
 
@@ -30,14 +31,6 @@ public: // サブクラス
 		//XMFLOAT4 color;	// 色 (RGBA)
 		XMMATRIX mat;	// ３Ｄ変換行列
 	};
-
-
-private: // 定数
-	static const int division = 50;					// 分割数
-	static const float radius;				// 底面の半径
-	static const float prizmHeight;			// 柱の高さ
-	static const int planeCount = division * 2 + division * 2;		// 面の数
-	static const int vertexCount = planeCount * 3;		// 頂点数
 
 public: // 静的メンバ関数
 	/// <summary>
@@ -98,22 +91,12 @@ public: // 静的メンバ関数
 private: // 静的メンバ変数
 	// デバイス
 	static ID3D12Device* device;
-	// デスクリプタサイズ
-	static UINT descriptorHandleIncrementSize;
 	// コマンドリスト
 	static ID3D12GraphicsCommandList* cmdList;
 	// ルートシグネチャ
 	static ComPtr<ID3D12RootSignature> rootsignature;
 	// パイプラインステートオブジェクト
 	static ComPtr<ID3D12PipelineState> pipelinestate;
-	// デスクリプタヒープ
-	static ComPtr<ID3D12DescriptorHeap> descHeap;
-	// テクスチャバッファ
-	static ComPtr<ID3D12Resource> texbuff;
-	// シェーダリソースビューのハンドル(CPU)
-	static CD3DX12_CPU_DESCRIPTOR_HANDLE cpuDescHandleSRV;
-	// シェーダリソースビューのハンドル(CPU)
-	static CD3DX12_GPU_DESCRIPTOR_HANDLE gpuDescHandleSRV;
 	// ビュー行列
 	static XMMATRIX matView;
 	// 射影行列
@@ -124,14 +107,8 @@ private: // 静的メンバ変数
 	static XMFLOAT3 target;
 	// 上方向ベクトル
 	static XMFLOAT3 up;
-	// vector 配列の強化版
-	/*
-		配列って実行中に要素数変更できないよね	(静的メモリ確保
-		vectorは実行中に要素数が増やせる		(動的メモリ確保
-	*/
 
 private:// 静的メンバ関数
-
 
 	/// <summary>
 	/// カメラ初期化
@@ -151,8 +128,6 @@ private:// 静的メンバ関数
 	/// </summary>
 	static void UpdateViewMatrix();
 
-	
-
 public: // メンバ関数
 	bool Initialize();
 	/// <summary>
@@ -165,25 +140,24 @@ public: // メンバ関数
 	/// </summary>
 	void Draw();
 
-	/// <summary>
-	/// 座標の取得
-	/// </summary>
-	/// <returns>座標</returns>
-	const XMFLOAT3& GetPosition() const { return position; }
-
-	/// <summary>
-	/// 座標の設定
-	/// </summary>
-	/// <param name="position">座標</param>
-	void SetPosition(const XMFLOAT3& position) { this->position = position; }
-
-	//setter
+	// モデルの設定
 	void SetModel(Model* model) { this->model = model; }
 
+	// オブジェクトの座標
+	const XMFLOAT3& GetPosition() const { return position; }
+	void SetPosition(const XMFLOAT3& position) { this->position = position; }
+	// オブジェクトの大きさ
+	void SetScale(const XMFLOAT3& scale) { this->scale = scale; }
+	const XMFLOAT3& GetScale() const { return scale; }
+	// オブジェクトの回転
+	void SetRotation(const XMFLOAT3& rotation) { this->rotation = rotation; }
+	const XMFLOAT3& GetRotation() const { return rotation; }
+
 private: // メンバ変数
-
-	ComPtr<ID3D12Resource> constBuffB0; // 定数バッファ
-
+	// モデル
+	Model* model = nullptr;
+	// 定数バッファ
+	ComPtr<ID3D12Resource> constBuffB0;
 	// 色
 	XMFLOAT4 color = { 1,1,1,1 };
 	// ローカルスケール
@@ -193,11 +167,7 @@ private: // メンバ変数
 	// ローカル座標
 	XMFLOAT3 position = { 0,0,0 };
 	// ローカルワールド変換行列
-	XMMATRIX matWorld = {};
+	XMMATRIX matWorld;
 	// 親オブジェクト
 	Object3d* parent = nullptr;
-
-	//モデル
-	Model* model = nullptr;
 };
-
